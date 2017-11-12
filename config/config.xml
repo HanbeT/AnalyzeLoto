@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <datebase>
+        <host></host>
+        <port></port>
+        <name></name>
+        <user></user>
+        <pass></pass>
+    </datebase>
+</config>
