@@ -3,14 +3,19 @@ package com.koba_masa.analyze.loto.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.koba_masa.analyze.loto.dao.Loto6Dao;
 
 public class DbAccess6 extends DbAccess {
 
     private final String INSERT = "INSERT INTO LOTO6_RESULT_INFO_TBL VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())";
-    private final String SELECT = "SELECT * FROM LOTO6_RESULT_INFO_TBL WHERE times = ?";
+    private final String SELECT = "SELECT times FROM LOTO6_RESULT_INFO_TBL";
+
+    // カラムヘッダー(開催回)
+    private final String COL_HEADER_TIMES  = "times";
 
     /** コンストラクタ */
     public DbAccess6() throws Exception {
@@ -24,21 +29,35 @@ public class DbAccess6 extends DbAccess {
      */
     public void insert(ArrayList<Loto6Dao> aDao) throws SQLException {
         // ステートメント
+        Statement select = null;
+        // 検索結果
+        ResultSet resSelect = null;
+        // 登録済み開催回
+        HashSet<Integer> registTimes = new HashSet<Integer>();
+
+        // ステートメント
         PreparedStatement insert = null;
         // 登録結果
         int resInsert = -1;
-        // ステートメント
-        PreparedStatement select = null;
-        // 検索結果
-        ResultSet resSelect = null;
 
-        select = conn.prepareStatement(SELECT);
-        insert = conn.prepareStatement(INSERT);
         try {
+            // ステートメント文生成
+            select = conn.createStatement();
+            // プリペアード文生成
+            insert = conn.prepareStatement(INSERT);
+
+            // 登録済み開催回情報取得
+            resSelect = select.executeQuery(SELECT);
+            while ( resSelect.next() ) {
+                if ( !registTimes.contains(resSelect.getInt(COL_HEADER_TIMES)) ) {
+                    registTimes.add(resSelect.getInt(COL_HEADER_TIMES));
+                }
+            }
+
+            // 新規開催回情報登録
             for (Loto6Dao dao : aDao) {
-                select.setInt(1, dao.getTimes());
-                resSelect = select.executeQuery();
-                if ( !resSelect.next() ) {
+                if ( !registTimes.contains(dao.getTimes()) ) {
+                    // プリペアードセット
                     insert.setBoolean(1, dao.getActiveflg());
                     insert.setInt(2, dao.getTimes());
                     insert.setString(3, dao.getDay());
@@ -61,8 +80,10 @@ public class DbAccess6 extends DbAccess {
                     insert.setLong(20, dao.getMoney5());
                     insert.setLong(21, dao.getSales());
                     insert.setLong(22, dao.getCarryOver());
-
+                    // Insert文実行
                     resInsert = insert.executeUpdate();
+                    System.out.println("第" + dao.getTimes() + "回の登録が完了しました。");
+                    // Insert文クリア
                     insert.clearParameters();
                 }
             }
@@ -70,7 +91,4 @@ public class DbAccess6 extends DbAccess {
             throw se;
         }
     }
-
-
-
 }

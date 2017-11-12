@@ -78,6 +78,8 @@ public class MainAnalyzeLoto6 extends AbstractAnalyzeLoto {
             // DB切断
             db.close();
 
+            // 処理終了
+            System.out.println("処理が正常に完了しました。");
         } catch (SQLException se) {
             se.printStackTrace();
         } catch (Exception e) {
